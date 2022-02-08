@@ -4,6 +4,8 @@ const request = require('supertest');
 const app = require('../lib/app');
 const UserService = require('../lib/services/UserService');
 
+const agent = request.agent(app);
+
 const mockUser = {
   email: 'test@example.com',
   password: '12345',
@@ -23,6 +25,11 @@ const registerAndLogin = async (userProps = {}) => {
   const { email } = user;
   await agent.post('/api/v1/users/session').send({ email, password });
   return [agent, user];
+};
+
+const testSecret = {
+  title: 'My Little Secret',
+  description: 'This is not for you.  This is only for me.',
 };
 
 describe('backend routes', () => {
@@ -61,5 +68,38 @@ describe('backend routes', () => {
       exp: expect.any(Number),
       iat: expect.any(Number),
     });
+  });
+
+  it('deletes users session and logs out the user', async () => {
+    const res = await agent.delete('/api/v1/users/session');
+
+    expect(res.body).toEqual({
+      success: true,
+      message: 'Signed out successfully!',
+    });
+  });
+
+  //Get logged in users secrets - for currently logged in users
+  it('creates a secret only when a user is logged in', async () => {
+    const [agent, user] = await registerAndLogin();
+    const newSecret = await agent
+      .post('/api/v1/secrets')
+      .send({ ...testSecret });
+
+    expect(newSecret.body).toEqual({
+      createdAt: expect.any(String),
+      id: expect.any(String),
+      ...testSecret,
+    });
+  });
+
+  it('Lists logged in users secrets', async () => {
+    const [agent, user] = await registerAndLogin({ email: 'admin' });
+    await agent.post('/api/v1/secrets').send({ ...testSecret });
+    const res = await agent.get('/api/v1/secrets');
+
+    expect(res.body).toEqual([
+      { ...testSecret, id: expect.any(String), createdAt: expect.any(String) },
+    ]);
   });
 });

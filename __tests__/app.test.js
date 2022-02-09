@@ -13,15 +13,8 @@ const mockUser = {
 
 const registerAndLogin = async (userProps = {}) => {
   const password = userProps.password ?? mockUser.password;
-
-  // Create an "agent" that gives us the ability
-  // to store cookies between requests in a test
   const agent = request.agent(app);
-
-  // Create a user to sign in with
   const user = await UserService.create({ ...mockUser, ...userProps });
-
-  // ...then sign in
   const { email } = user;
   await agent.post('/api/v1/users/session').send({ email, password });
   return [agent, user];
@@ -79,7 +72,6 @@ describe('backend routes', () => {
     });
   });
 
-  //Get logged in users secrets - for currently logged in users
   it('creates a secret only when a user is logged in', async () => {
     const [agent, user] = await registerAndLogin();
     const newSecret = await agent

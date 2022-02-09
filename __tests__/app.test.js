@@ -7,7 +7,9 @@ const UserService = require('../lib/services/UserService');
 const agent = request.agent(app);
 
 const mockUser = {
-  email: 'test@example.com',
+  firstName: 'Fred',
+  lastName: 'Jones',
+  email: 'test@defense.gov',
   password: '12345',
 };
 
@@ -36,10 +38,12 @@ describe('backend routes', () => {
 
   it('creates a new user with hashed password', async () => {
     const res = await request(app).post('/api/v1/users').send(mockUser);
-    const { email } = mockUser;
+    const { firstName, lastName, email } = mockUser;
 
     expect(res.body).toEqual({
       id: expect.any(String),
+      firstName,
+      lastName,
       email,
     });
   });
